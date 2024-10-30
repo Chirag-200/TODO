@@ -17,7 +17,7 @@ type TextProps = {
         <View>
 
           
-            <TextInput placeholder={placeholderText} style = {{borderWidth: 1, backgroundColor: 'rgb(30,30,30)', borderRadius: 10, paddingLeft:10 }} placeholderTextColor={'white'}/>
+            <TextInput placeholder={placeholderText} style = {{borderWidth: 1, backgroundColor: 'rgb(30,30,30)', borderRadius: 10, paddingLeft: 15 , height:50}} placeholderTextColor={'white'}/>
             
         </View>
     )
