@@ -1,24 +1,90 @@
-import React from 'react';
-import { Image, View, StyleSheet, TextInput, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, View, StyleSheet, TextInput, Text, TouchableOpacity, FlatList } from 'react-native';
 import CommonText from '../common/CommonText';
 import CommonTextInput from '../common/CommonTextInput';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
+import ProgressBar from './test';
+import CheckBox from '@react-native-community/checkbox';
+import CreateTask from '../screen/create';
+import { HomeScreenNavigationProps, RootStackParamList } from '../navigation/types';
 
 
-const Home = () => {
+interface Todo {
+    id: number;
+    todo: string;
+    completed: boolean;
+    isChecked: boolean;
+}
+
+  
+
+const Home: React.FC = ({navigation}: any) => {
+    // const navigation = useNavigation<HomeScreenNavigationProps>();
+   
+
+    const [list, setLists] = useState<Todo[]>([]);
+    const colorArray = ['#FACBBA', '#D7F0FF', '#FAD9FF']; 
+
+    const countCheckedItems = () => {
+        return list.filter(item => item.isChecked).length;
+    };
+
+    const finding = () => {
+        return Math.round((countCheckedItems() / list.length) * 100);
+    };
+
+    const fetchToDoS = async () => {
+        try {
+            const results = await fetch('https://dummyjson.com/todos');
+            if (!results.ok) {
+                throw new Error('Error fetching todos');
+            }
+            const data = await results.json();
+            const modifiedData: Todo[] = data.todos.map((todo: any) => ({
+                ...todo,
+                isChecked: todo.completed, 
+            }));
+            setLists(modifiedData);
+        } catch (error) {
+            console.log("Error:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchToDoS();
+    }, []);
+
+    const toggleCheckbox = (id: number) => {
+        setLists(prevLists =>
+            prevLists.map(todo =>
+                todo.id === id ? { ...todo, isChecked: !todo.isChecked } : todo
+            )
+        );
+    };
+
+    const completedtask = () => {
+        return list.filter(item => item.isChecked).length;
+    };
+
+    const calculateCompletionPercentage = () => {
+        const totalTasks = list.length;
+        const completedTasks = completedtask();
+        return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.textContainer}>
-                    <CommonText 
-                        FirstText='You have got 5 tasks' 
-                        FirstTextStyle={{ color: 'white', fontWeight: '600', fontSize: 25 }} 
-                        numberOfLines={2} 
+                    <CommonText
+                        FirstText='You have got 5 tasks'
+                        FirstTextStyle={{ color: 'white', fontWeight: '600', fontSize: 25 }}
+                        numberOfLines={2}
                     />
-                    <CommonText 
-                        FirstText='today to complete' 
-                        FirstTextStyle={{ color: 'white', fontWeight: '600', fontSize: 25 }} 
+                    <CommonText
+                        FirstText='today to complete'
+                        FirstTextStyle={{ color: 'white', fontWeight: '600', fontSize: 25 }}
                     />
                 </View>
                 <View style={styles.gradientContainer}>
@@ -26,84 +92,80 @@ const Home = () => {
                         colors={['#BA83DE', 'rgba(217, 217, 217, 0)']}
                         style={styles.gradient}
                     >
-                        <Image 
-                            source={require('../assets/images/image1.png')} 
-                            style={styles.image} 
+                        <Image
+                            source={require('../assets/images/image1.png')}
+                            style={styles.image}
                         />
                     </LinearGradient>
                 </View>
             </View>
-            <View>
-            {/* <TextInput style = {{flexDirection: 'row', alignItems: 'center', borderWidth:1, borderColor:'white'}}/> */}
-            {/* <Image style={{height:20,width:20}} tintColor={'red'} source={require('../assets/images/search.png')}/> */}
-            {/* <CommonTextInput placeholderText={'Search Task Here'} /> */}
 
-            {/* Adding some style for better visibility */}
-            {/* </TextInput> */}
-            
-            <View style={{flexDirection:'row',alignItems:'center',backgroundColor:'rgb(30,30,30)',marginHorizontal:10,borderRadius:10}}>
-            <Image style={{height:18,width:18,marginHorizontal:10}} tintColor={'white'} source={require('../assets/images/search.png')}/>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgb(30,30,30)', marginHorizontal: 10, borderRadius: 10 }}>
+                <Image style={{ height: 18, width: 18, marginHorizontal: 10 }} tintColor={'white'} source={require('../assets/images/search.png')} />
+                <TextInput
+                    style={{ width: '90%', borderRadius: 10 }}
+                    placeholder='Search Task Here'
+                    placeholderTextColor={'white'}
+                />
+            </View>
 
-            <TextInput style={{ width: '90%', borderRadius:10}}
-            placeholder='Search Task Here'
-            placeholderTextColor={'white'}
+            <View style={{ flexDirection: 'row', alignItems: 'center', alignContent: 'space-between' }}>
+                <Text style={{ color: 'white', width: '80%', fontWeight: '400', margin: 10, fontSize: 22 }}>Progress</Text>
+                <Text style={{ color: '#BA83DE', flex: 1, fontSize: 16 }}>See All</Text>
+            </View>
+
+            <View style={{ backgroundColor: '#181818', margin: 10, borderRadius: 10, padding: 10 }}>
+                <Text style={{ color: 'white' }}>Daily Tasks</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>{completedtask()}/{list.length} Tasks Completed</Text>
+
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={{ color: 'white', fontWeight: '200', width: '91%' }}>You are almost done, go ahead</Text>
+                    <Text style={{ color: 'white' }}>{calculateCompletionPercentage()}%</Text>
+                </View>
+                <ProgressBar progress={0.5} />
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', alignContent: 'space-between' }}>
+                <Text style={{ color: 'white', width: '80%', fontWeight: '400', margin: 10, fontSize: 22 }}>Today's Tasks</Text>
+                <Text style={{ color: '#BA83DE', flex: 1, fontSize: 16 }}>See All</Text>
+            </View>
+
+            <FlatList
+                data={list}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item, index }) => (
+                    <View style={{ flexDirection: 'row', backgroundColor: 'rgb(31,31,31)', borderRadius: 10, marginBottom: 10, alignItems: 'center' , marginHorizontal:10}}>
+                        <View style={{ backgroundColor: colorArray[index % colorArray.length], width: '2.5%', height: '100%', borderBottomLeftRadius: 10, borderTopLeftRadius: 10 }} />
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ color: 'white', width: '100%', textAlignVertical: 'center', borderRadius: 10, paddingTop: 15, paddingLeft: 15, marginBottom: 2 }} numberOfLines={2}>
+                                {item.todo}
+                            </Text>
+                            <View style={{ flexDirection: 'row', alignContent: 'center', marginBottom: 10 }}>
+                                <Image source={require('../assets/images/bag.png')} style={{ height: 18, width: 16, marginLeft: 15, marginBottom: 10 }} />
+                                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>  4 Oct</Text>
+                            </View>
+                        </View>
+                        <CheckBox
+                            disabled={false}
+                            value={item.isChecked} 
+                            onValueChange={() => toggleCheckbox(item.id)} 
+                            tintColors={{ true: 'rgb(185,134,220)', false: 'rgb(185,134,220)' }}
+                            style={{ alignSelf: 'center', marginLeft: 'auto' }}
+                        />
+                    </View>
+                )}
             />
 
-            </View>
-            </View>
-
-            <View style = {{flexDirection: 'row', alignItems:'center' , alignContent:'space-between' }}>
-            <Text style = {{color: 'white' ,width:'80%', fontWeight: '400', margin:10, fontSize: 22}}>Progress</Text>
-            <Text style = {{color:'#BA83DE', flex:1,fontSize: 16}}>See All</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', alignContent: 'space-between', marginTop: 20 }}>
+                <Text style={{ color: 'white', width: '80%', fontWeight: '400', margin: 10, fontSize: 22 }}>Tomorrow's Tasks</Text>
+                <Text style={{ color: '#BA83DE', flex: 1, fontSize: 16 }}>See All</Text>
             </View>
 
 
-            <View style = {{backgroundColor:'#181818' , margin: 10, borderRadius:10, padding: 10}}>
-            <Text style = {{color: 'white'}}>Daily Tasks</Text>
-            <Text style = {{color: 'rgba(255,255,255,0.8)'}}>2/3 Tasks Completed</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('CreateTask')} style={{alignSelf:'flex-end'}}>
+                <Image source={require('../assets/images/add.png')} style={{ height: 75, width: 71 ,}} />
+            </TouchableOpacity>
 
-            <View style = {{flexDirection: 'row'}}>
-            <Text style = {{color: 'white', fontWeight:'200', width: '91%'}}>You are almost done go ahead</Text>  
-            <Text style = {{color: 'white'}}>66%</Text>
-            </View>
-            <Image source={require('../assets/images/bar.png')} style = {{height:'12%', width:'100%'}}/>
-
-            </View>
-
-
-            <View style = {{flexDirection: 'row', alignItems:'center' , alignContent:'space-between' }}>
-                
-            <Text style = {{color: 'white' ,width:'80%', fontWeight: '400', margin:10, fontSize: 22}}>Today's Tasks</Text>
-            <Text style = {{color:'#BA83DE', flex:1,fontSize: 16}}>See All</Text>
-            </View>
-
-            <View style = {{ flexDirection:'row', backgroundColor: 'rgb(31,31,31)', borderRadius: 10}}>
-
-            {/* <View style = {{width: '10%', height: '100%',flex:0.1 ,backgroundColor:'blue'}}></View> */}
-                <View style = {{backgroundColor: 'rgb(249,203,187)', width: '2.5%', borderBottomLeftRadius: 10, borderTopLeftRadius:10 }}>
-                </View>
-                <View>
-
-                <Text style = {{color:'white' , width: '280%' ,textAlignVertical: 'center', borderRadius: 10 , paddingTop: 15 , paddingLeft:15 }}>Mobile App Research</Text>
-                <View style = {{flexDirection: 'row'}}>
-                <Image source={require('../assets/images/bag.png')} style = {{height: 18, width: 16, marginLeft:15 , marginBottom: 10}}/> 
-                <Text style = {{color:'rgba(255,255,255,0.8)'}}>  4 Oct</Text>
-                </View>              
-                </View>
-
-            </View>
-
-
-            <View style = {{flexDirection: 'row', alignItems:'center' , alignContent:'space-between' , marginTop: 20}}>
-                
-                <Text style = {{color: 'white' ,width:'80%', fontWeight: '400', margin:10, fontSize: 22}}>Tommorrow Task</Text>
-                <Text style = {{color:'#BA83DE', flex:1,fontSize: 16}}>See All</Text>
-                </View>
-
-
-
-        <Image source={require('../assets/images/add.png')} style = {{height:75 , width:71 , alignSelf : 'flex-end'}}/>
-            
         </View>
     );
 }
@@ -126,7 +188,6 @@ const styles = StyleSheet.create({
         width: 60,
         borderRadius: 30,
         overflow: 'hidden',
-        
     },
     gradient: {
         flex: 1,
@@ -138,7 +199,6 @@ const styles = StyleSheet.create({
         width: 50,
         borderRadius: 25,
     },
-   
 });
 
 export default Home;
